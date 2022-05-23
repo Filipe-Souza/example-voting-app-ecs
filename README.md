@@ -11,6 +11,9 @@ with the Docker, Docker-Compose and Kubernetes configurations.
 
 This aproach utilizes the AWS ECS for orchestrating the containers and bring the voting and result apps avaliable online.
 
+![](graph.svg)
+* Graph renderized with [im2nguyen/rover](https://github.com/im2nguyen/rover) *
+
 ## Getting started
 
 First we need to construct the necessary resources for this application. Those are the resources:
