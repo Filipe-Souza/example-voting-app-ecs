@@ -18,9 +18,6 @@ locals {
       worker = "${local.project_name}-worker"
     }
   }
-  redis = {
-    cluster_name = local.project_name
-  }
   elb = {
     // Watch out for the 32 characters limit of ELB and TG resources from AWS.
     names = {
@@ -29,6 +26,6 @@ locals {
       worker = "${local.project_name}-worker"
     }
   }
-  rds_database_identifier  = local.project_name
-  ecr_repo_name            = local.project_name
+  rds_database_identifier = local.project_name
+  ecr_repo_name           = local.project_name
 }

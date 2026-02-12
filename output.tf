@@ -11,7 +11,7 @@ output "url_postgres" {
 }
 
 output "url_redis" {
-  value = aws_elasticache_cluster.aws_redis.cache_nodes.0.address
+  value = aws_elasticache_cluster.aws_redis.cache_nodes[0].address
 }
 
 output "url_ecr_repo" {
