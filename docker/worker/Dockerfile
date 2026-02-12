@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/core/sdk as builder
+FROM mcr.microsoft.com/dotnet/core/sdk AS builder
 
 WORKDIR /Worker
 COPY src/Worker/Worker.csproj .

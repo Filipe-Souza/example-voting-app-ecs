@@ -85,14 +85,16 @@ namespace Worker
                     connection.Open();
                     break;
                 }
-                catch (SocketException)
+                catch (SocketException e)
                 {
-                    Console.Error.WriteLine("Waiting for db");
+                    Console.Error.WriteLine("Socket exception while waiting for db");
+                    Console.Error.WriteLine(e);
                     Thread.Sleep(1000);
                 }
-                catch (DbException)
+                catch (DbException e)
                 {
-                    Console.Error.WriteLine("Waiting for db");
+                    Console.Error.WriteLine("Error while waiting for db");
+                    Console.Error.WriteLine(e);
                     Thread.Sleep(1000);
                 }
             }
