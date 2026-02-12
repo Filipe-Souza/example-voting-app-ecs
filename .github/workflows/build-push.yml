@@ -1,0 +1,61 @@
+name: Build and Push to ECR
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  REPO: ${{ secrets.ECR_REPOSITORY }}
+  REDIS_HOST: ${{ secrets.REDIS_HOST }}
+  POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
+  POSTGRES_USERNAME: ${{ secrets.POSTGRES_USERNAME }}
+  POSTGRES_PWD: ${{ secrets.POSTGRES_PWD }}
+  AWS_REGION: us-east-1
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build vote image
+        run: |
+          docker build ./docker/vote \
+            -t "${REPO}:vote" \
+            --build-arg REDIS_HOST="${REDIS_HOST}"
+
+      - name: Build result image
+        run: |
+          docker build ./docker/result \
+            -t "${REPO}:result" \
+            --build-arg POSTGRES_HOST="${POSTGRES_HOST}" \
+            --build-arg POSTGRES_USERNAME="${POSTGRES_USERNAME}" \
+            --build-arg POSTGRES_PWD="${POSTGRES_PWD}"
+
+      - name: Build worker image
+        run: |
+          docker build ./docker/worker \
+            -t "${REPO}:worker" \
+            --build-arg POSTGRES_HOST="${POSTGRES_HOST}" \
+            --build-arg POSTGRES_USERNAME="${POSTGRES_USERNAME}" \
+            --build-arg POSTGRES_PWD="${POSTGRES_PWD}" \
+            --build-arg REDIS_HOST="${REDIS_HOST}"
+
+      - name: Push images to ECR
+        run: |
+          docker push "${REPO}:vote"
+          docker push "${REPO}:result"
+          docker push "${REPO}:worker"

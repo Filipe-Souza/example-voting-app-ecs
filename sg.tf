@@ -1,6 +1,6 @@
 locals {
-  app_ports   = [5000, 5001, 5858, 80]
-  db_ports = [6379, 5432]
+  app_ports = [5000, 5001, 5858, 80]
+  db_ports  = [6379, 5432]
 }
 
 resource "aws_security_group" "main_sg" {
@@ -39,10 +39,10 @@ resource "aws_security_group" "databases_sg" {
   dynamic "ingress" {
     for_each = local.db_ports
     content {
-      description      = var.db_security_group_description
-      from_port        = ingress.value
-      to_port          = element(local.db_ports, index(local.db_ports, ingress.value))
-      protocol         = "tcp"
+      description     = var.db_security_group_description
+      from_port       = ingress.value
+      to_port         = element(local.db_ports, index(local.db_ports, ingress.value))
+      protocol        = "tcp"
       security_groups = [aws_security_group.main_sg.id]
     }
   }

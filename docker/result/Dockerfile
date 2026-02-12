@@ -1,4 +1,4 @@
-FROM node:10-slim
+FROM node:24-slim
 
 ARG POSTGRES_HOST
 ARG POSTGRES_USERNAME
@@ -22,13 +22,11 @@ WORKDIR /app
 # have nodemon available for local dev use (file watching)
 RUN npm install -g nodemon
 
-COPY package*.json ./
+COPY . /app
 
 RUN npm ci \
  && npm cache clean --force \
  && mv /app/node_modules /node_modules
-
-COPY . .
 
 ENV PORT 5001
 
