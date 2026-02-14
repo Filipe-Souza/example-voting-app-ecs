@@ -9,9 +9,9 @@ The Linux stack uses Python, Node.js, .NET Core (or optionally Java), with Redis
 The Docker images present on this repo are modified versions of the original repo [example-voting-app](https://github.com/dockersamples/example-voting-app/)
 with the Docker, Docker-Compose and Kubernetes configurations.
 
-This aproach utilizes the AWS ECS for orchestrating the containers and bring the voting and result apps avaliable online.
+This approach utilizes the AWS ECS for orchestrating the containers and bring the voting and result apps avaliable online.
 
-![](graph.svg)
+![](assets/docs/rover.svg)
 * Graph renderized with [im2nguyen/rover](https://github.com/im2nguyen/rover) *
 
 ## Getting started

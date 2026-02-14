@@ -1,0 +1,59 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USERNAME}
+      POSTGRES_PASSWORD: ${POSTGRES_PWD}
+      POSTGRES_DB: admin
+    ports:
+      - "5432:5432"
+    volumes:
+      - posstgres_data:/var/lib/postgresql/data
+
+  vote:
+    build:
+      context: docker/vote
+    container_name: vote
+    depends_on:
+      - redis
+    environment:
+      REDIS_HOST: redis
+    ports:
+      - "8080:5000"
+
+  result:
+    build:
+      context: docker/results
+    container_name: result
+    depends_on:
+      - postgres
+    environment:
+      DB_CONN_STRING: "postgres://${POSTGRES_USERNAME}:${POSTGRES_PWD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
+      VOTING_OPTION_A: "Cats"
+      VOTING_OPTION_B: "Dogs"
+      PUBLISH_INTERVAL_MS: 5000
+    ports:
+      - "8081:5001"
+
+  worker:
+    build:
+      context: docker/worker
+    container_name: worker
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      REDIS_HOST: redis
+      POSTGRES_HOST: postgres
+      POSTGRES_USERNAME: ${POSTGRES_USERNAME}
+      POSTGRES_PWD: ${POSTGRES_PWD}
+
+volumes:
+  posstgres_data:

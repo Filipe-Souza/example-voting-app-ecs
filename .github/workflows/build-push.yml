@@ -1,4 +1,4 @@
-name: Build and Push to ECR
+name: Build and Push Versioned Images to ECR
 
 on:
   push:
@@ -6,12 +6,12 @@ on:
       - main
 
 env:
+  AWS_REGION: us-east-1
   REPO: ${{ secrets.ECR_REPOSITORY }}
   REDIS_HOST: ${{ secrets.REDIS_HOST }}
   POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
   POSTGRES_USERNAME: ${{ secrets.POSTGRES_USERNAME }}
   POSTGRES_PWD: ${{ secrets.POSTGRES_PWD }}
-  AWS_REGION: us-east-1
 
 jobs:
   build-and-push:
@@ -19,28 +19,68 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v5
+      # 🔐 Configure AWS
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      # 🔐 Login to ECR
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
+      # 🏷️ Determine next version from ECR
+      - name: Get latest version and bump
+        id: version
+        run: |
+          set -e
+
+          REPO_NAME=$(echo "${REPO}" | cut -d'/' -f2)
+
+          echo "Checking existing tags in ECR repo: $REPO_NAME"
+
+          TAGS=$(aws ecr describe-images \
+            --repository-name "$REPO_NAME" \
+            --query 'imageDetails[].imageTags[]' \
+            --output text 2>/dev/null || true)
+
+          # Filter semantic version tags like v1.2.3
+          LATEST=$(echo "$TAGS" | tr '\t' '\n' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1)
+
+          if [ -z "$LATEST" ]; then
+            echo "No version found. Starting at v1.0.0"
+            NEXT="v1.0.0"
+          else
+            echo "Latest version: $LATEST"
+
+            VERSION=${LATEST#v}
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+
+            PATCH=$((PATCH + 1))
+            NEXT="v${MAJOR}.${MINOR}.${PATCH}"
+          fi
+
+          echo "Next version: $NEXT"
+          echo "VERSION=$NEXT" >> $GITHUB_ENV
+          echo "version=$NEXT" >> $GITHUB_OUTPUT
+
+      # 🐳 Build Images
       - name: Build vote image
         run: |
           docker build ./docker/vote \
-            -t "${REPO}:vote" \
+            -t "${REPO}:vote-${VERSION}" \
+            -t "${REPO}:vote-latest" \
             --build-arg REDIS_HOST="${REDIS_HOST}"
 
       - name: Build result image
         run: |
           docker build ./docker/result \
-            -t "${REPO}:result" \
+            -t "${REPO}:result-${VERSION}" \
+            -t "${REPO}:result-latest" \
             --build-arg POSTGRES_HOST="${POSTGRES_HOST}" \
             --build-arg POSTGRES_USERNAME="${POSTGRES_USERNAME}" \
             --build-arg POSTGRES_PWD="${POSTGRES_PWD}"
@@ -48,14 +88,24 @@ jobs:
       - name: Build worker image
         run: |
           docker build ./docker/worker \
-            -t "${REPO}:worker" \
+            -t "${REPO}:worker-${VERSION}" \
+            -t "${REPO}:worker-latest" \
             --build-arg POSTGRES_HOST="${POSTGRES_HOST}" \
             --build-arg POSTGRES_USERNAME="${POSTGRES_USERNAME}" \
             --build-arg POSTGRES_PWD="${POSTGRES_PWD}" \
             --build-arg REDIS_HOST="${REDIS_HOST}"
 
+      # 📤 Push Images
       - name: Push images to ECR
         run: |
-          docker push "${REPO}:vote"
-          docker push "${REPO}:result"
-          docker push "${REPO}:worker"
+          docker push "${REPO}:vote-${VERSION}"
+          docker push "${REPO}:vote-latest"
+
+          docker push "${REPO}:result-${VERSION}"
+          docker push "${REPO}:result-latest"
+
+          docker push "${REPO}:worker-${VERSION}"
+          docker push "${REPO}:worker-latest"
+
+      - name: Show published version
+        run: echo "Published version $VERSION"

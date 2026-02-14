@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+z#!/usr/bin/env bash
 
 REPO=$(terraform output -raw url_ecr_repo)
 REDIS_HOST=$(terraform output -raw url_redis)
