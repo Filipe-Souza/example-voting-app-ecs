@@ -1,4 +1,6 @@
-z#!/usr/bin/env bash
+#!/usr/bin/env bash
+
+# Old convenient build script, kept for sentimental reasons.
 
 REPO=$(terraform output -raw url_ecr_repo)
 REDIS_HOST=$(terraform output -raw url_redis)
