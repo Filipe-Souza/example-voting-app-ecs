@@ -1,10 +1,9 @@
-name: Build and Push Versioned Images to ECR
+name: Build and Push Versioned Images to ECR and Deploy to ECS
 
 on:
   push:
     branches:
       - main
-
 env:
   AWS_REGION: us-east-1
   REPO: ${{ secrets.ECR_REPOSITORY }}
@@ -12,6 +11,9 @@ env:
   POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
   POSTGRES_USERNAME: ${{ secrets.POSTGRES_USERNAME }}
   POSTGRES_PWD: ${{ secrets.POSTGRES_PWD }}
+  ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
+  ECS_SERVICE: ${{ secrets.ECS_SERVICE }}
+  TASK_DEFINITION_FAMILY: ${{ secrets.TASK_DEFINITION_FAMILY }}
 
 jobs:
   build-and-push:
@@ -19,21 +21,18 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      # 🔐 Configure AWS
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # 🔐 Login to ECR
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      # 🏷️ Determine next version from ECR
       - name: Get latest version and bump
         id: version
         run: |
@@ -68,7 +67,6 @@ jobs:
           echo "VERSION=$NEXT" >> $GITHUB_ENV
           echo "version=$NEXT" >> $GITHUB_OUTPUT
 
-      # 🐳 Build Images
       - name: Build vote image
         run: |
           docker build ./docker/vote \
@@ -78,12 +76,9 @@ jobs:
 
       - name: Build result image
         run: |
-          docker build ./docker/result \
+          docker build ./docker/results \
             -t "${REPO}:result-${VERSION}" \
-            -t "${REPO}:result-latest" \
-            --build-arg POSTGRES_HOST="${POSTGRES_HOST}" \
-            --build-arg POSTGRES_USERNAME="${POSTGRES_USERNAME}" \
-            --build-arg POSTGRES_PWD="${POSTGRES_PWD}"
+            -t "${REPO}:result-latest"
 
       - name: Build worker image
         run: |
@@ -95,7 +90,6 @@ jobs:
             --build-arg POSTGRES_PWD="${POSTGRES_PWD}" \
             --build-arg REDIS_HOST="${REDIS_HOST}"
 
-      # 📤 Push Images
       - name: Push images to ECR
         run: |
           docker push "${REPO}:vote-${VERSION}"
@@ -107,5 +101,49 @@ jobs:
           docker push "${REPO}:worker-${VERSION}"
           docker push "${REPO}:worker-latest"
 
+      - name: Register new ECS task definition
+        id: task-def
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.TASK_DEFINITION_FAMILY }} \
+            --query taskDefinition > task-def.json
+
+          jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' task-def.json > task-def-clean.json
+
+          jq --arg voteimg "${REPO}:vote-${VERSION}" \
+             '.containerDefinitions |= map(if .name == "vote" then .image = $voteimg else . end)' \
+             task-def-clean.json > tmp.json && mv tmp.json task-def-clean.json
+
+          jq --arg resultimg "${REPO}:result-${VERSION}" \
+             '.containerDefinitions |= map(if .name == "result" then .image = $resultimg else . end)' \
+             task-def-clean.json > tmp.json && mv tmp.json task-def-clean.json
+
+          jq --arg workerimg "${REPO}:worker-${VERSION}" \
+             '.containerDefinitions |= map(if .name == "worker" then .image = $workerimg else . end)' \
+             task-def-clean.json > tmp.json && mv tmp.json task-def-clean.json
+
+          NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://task-def-clean.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          echo "New task definition ARN: $NEW_TASK_DEF_ARN"
+          echo "NEW_TASK_DEF_ARN=$NEW_TASK_DEF_ARN" >> $GITHUB_ENV
+          echo "task-def-arn=$NEW_TASK_DEF_ARN" >> $GITHUB_OUTPUT
+
+      - name: Update ECS service
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.ECS_SERVICE }} \
+            --task-definition ${{ env.TASK_DEFINITION_FAMILY }} \
+            --force-new-deployment
+
+      - name: Wait for service to stabilize
+        run: |
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_SERVICE }}
+
       - name: Show published version
-        run: echo "Published version $VERSION"
+        run: echo "Published version $VERSION and deployed to ECS"

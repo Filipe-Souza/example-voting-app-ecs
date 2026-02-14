@@ -17,12 +17,12 @@
         <div id="choice">
             <div class="choice resulta">
                 <div class="label">{{.OptionA}}</div>
-                <div class="stat" id="optionA">...</div>
+                <div class="stat" id="optionA"></div>
             </div>
             <div class="divider"></div>
             <div class="choice resultb">
                 <div class="label">{{.OptionB}}</div>
-                <div class="stat" id="optionB">...</div>
+                <div class="stat" id="optionB"></div>
             </div>
         </div>
     </div>
@@ -46,8 +46,12 @@
             optionAPercent = Math.round(data.optionA / total * 100);
             optionBPercent = 100 - optionAPercent;
         }
-        document.getElementById('optionA').innerText = optionAPercent + '%';
-        document.getElementById('optionB').innerText = optionBPercent + '%';
+        statA = document.getElementById('optionA');
+        statB = document.getElementById('optionB');
+        statA.classList.remove('stat');
+        statB.classList.remove('stat');
+        statA.innerText = optionAPercent + '%';
+        statB.innerText = optionBPercent + '%';
         document.getElementById('totalVotes').innerText = total + (total === 1 ? ' vote' : ' votes');
         document.getElementById('background-stats-1').style.width = optionAPercent + '%';
         document.getElementById('background-stats-2').style.width = optionBPercent + '%';
