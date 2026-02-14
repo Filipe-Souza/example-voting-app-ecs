@@ -17,12 +17,12 @@
         <div id="choice">
             <div class="choice resulta">
                 <div class="label">{{.OptionA}}</div>
-                <div class="stat" id="optionA"></div>
+                <div class="stat loader" id="optionA"></div>
             </div>
             <div class="divider"></div>
             <div class="choice resultb">
                 <div class="label">{{.OptionB}}</div>
-                <div class="stat" id="optionB"></div>
+                <div class="stat loader" id="optionB"></div>
             </div>
         </div>
     </div>
@@ -48,8 +48,8 @@
         }
         statA = document.getElementById('optionA');
         statB = document.getElementById('optionB');
-        statA.classList.remove('stat');
-        statB.classList.remove('stat');
+        statA.classList.remove('loader');
+        statB.classList.remove('loader');
         statA.innerText = optionAPercent + '%';
         statB.innerText = optionBPercent + '%';
         document.getElementById('totalVotes').innerText = total + (total === 1 ? ' vote' : ' votes');
