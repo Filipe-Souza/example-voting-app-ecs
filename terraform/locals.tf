@@ -2,7 +2,7 @@ locals {
   project_name              = "${var.project_name}-${terraform.workspace}"
   cloudwatch_log_group_name = "/ecs/${local.project_name}"
   default_tags = {
-    ResourceOwner = "***REMOVED***",
+    ResourceOwner = "filipe.souza@mestre8d.com",
     Project       = local.project_name
   }
   ecs = {

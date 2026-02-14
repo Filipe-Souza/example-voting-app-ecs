@@ -3,7 +3,7 @@ resource "aws_ecs_cluster" "voting_app_cluster" {
   tags = local.default_tags
 }
 
-resource "aws_ecs_cluster_capacity_providers" "cluster_capacity_proviers" {
+resource "aws_ecs_cluster_capacity_providers" "cluster_capacity_providers" {
   cluster_name = aws_ecs_cluster.voting_app_cluster.name
 
   capacity_providers = ["FARGATE_SPOT", "FARGATE"]

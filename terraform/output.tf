@@ -23,16 +23,16 @@ output "ecs_cluster_name" {
 
 output "ecs_services_names" {
   value = {
-    vote: aws_ecs_service.ecs_service_vote.name,
-    worker: aws_ecs_service.ecs_service_worker.name,
-    result: aws_ecs_service.ecs_service_result.name
+    vote : aws_ecs_service.ecs_service_vote.name,
+    worker : aws_ecs_service.ecs_service_worker.name,
+    result : aws_ecs_service.ecs_service_result.name
   }
 }
 
 output "ecs_tasks_family" {
   value = {
-    vote: "${terraform.workspace}_vote_task"
-    result: "${terraform.workspace}_result_task"
-    worker: "${terraform.workspace}_worker_task"
+    vote : "${terraform.workspace}_vote_task"
+    result : "${terraform.workspace}_result_task"
+    worker : "${terraform.workspace}_worker_task"
   }
 }
