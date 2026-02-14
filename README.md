@@ -22,7 +22,7 @@ The preferable order of execution on this project would be:
 - Run the container images with Docker and docker compose locally and test the application behavior;
 - Execute the tofu commands to build your base infrastructure;
   - Annotate the outputs on the console since you're going to need that to access the application; 
-- Run the GitHub Actions pipeline using GitHub or my favorite local alternative (great project !) (nektos act tool)[https://nektosact.com/]
+- Run the GitHub Actions pipeline using GitHub or my favorite local alternative (great project !) [nektos act tool](https://nektosact.com/)
 - Access the applications (vote and/or results);
 
 ### Requisites
