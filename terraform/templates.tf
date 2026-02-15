@@ -15,7 +15,7 @@ data "template_file" "task_def_vote_template" {
       "secretOptions": null,
       "options": {
         "awslogs-group": "${local.cloudwatch_log_group_name}",
-        "awslogs-region": "us-east-1",
+        "awslogs-region": "${var.region}",
         "awslogs-stream-prefix": "vote"
       }
     },
@@ -45,17 +45,13 @@ data "template_file" "task_def_result_template" {
       "secretOptions": null,
       "options": {
         "awslogs-group": "${local.cloudwatch_log_group_name}",
-        "awslogs-region": "us-east-1",
+        "awslogs-region": "${var.region}",
         "awslogs-stream-prefix": "result"
       }
     },
     "portMappings": [{
       "containerPort": 5001,
       "hostPort": 5001
-    },
-    {
-      "containerPort": 5858,
-      "hostPort": 5858
     }]
   }
 ]
@@ -79,7 +75,7 @@ data "template_file" "task_def_worker_template" {
       "secretOptions": null,
       "options": {
         "awslogs-group": "${local.cloudwatch_log_group_name}",
-        "awslogs-region": "us-east-1",
+        "awslogs-region": "${var.region}",
         "awslogs-stream-prefix": "worker"
       }
     }
