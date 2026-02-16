@@ -24,3 +24,19 @@ resource "aws_ssm_parameter" "ecs_task_exec_iam_role" {
 
   tags = local.default_tags
 }
+
+resource "aws_ssm_parameter" "ecs_task_result_db_string" {
+  name = "/voting-app/ecs_task_result_db_string"
+  type = "SecureString"
+  value = "postgres://${aws_ssm_parameter.rds_db_username.value}:${aws_ssm_parameter.rds_db_password.value}@${aws_db_instance.persistant_database.address}:${aws_db_instance.persistant_database.port}/dbname?sslmode=disable"
+
+  tags = local.default_tags
+}
+
+resource "aws_ssm_parameter" "ecs_task_vote_redis_host" {
+  name = "/voting-app/ecs_task_vote_redis_host"
+  type = "SecureString"
+  value = aws_elasticache_cluster.aws_redis.cluster_address
+
+  tags = local.default_tags
+}
