@@ -22,13 +22,7 @@ data "template_file" "task_def_vote_template" {
     "portMappings": [{
       "containerPort": 5000,
       "hostPort": 5000
-    }],
-    "secrets": [
-      {
-        name = "REDIS_HOST"
-        valueFrom = "${aws_ssm_parameter.ecs_task_vote_redis_host.arn}
-      }
-    ]
+    }]
   }
 ]
 EOF
@@ -58,25 +52,7 @@ data "template_file" "task_def_result_template" {
     "portMappings": [{
       "containerPort": 5001,
       "hostPort": 5001
-    }],
-    "secrets": [
-      {
-        name = "DB_CONN_STRING"
-        valueFrom = "${aws_ssm_parameter.ecs_task_result_db_string.arn}
-      },
-      {
-        name = "VOTING_OPTION_A"
-        value = "Cats"
-      },
-      {
-        name = "VOTING_OPTION_B"
-        value = "Dogs"
-      },
-      {
-        name = "PUBLISH_INTERVAL_MS"
-        value = "5000"
-      }
-    ]
+    }]
   }
 ]
 EOF
