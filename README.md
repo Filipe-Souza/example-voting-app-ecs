@@ -46,3 +46,7 @@ This setup was tested on this environment:
 
 ![](assets/docs/rover.svg)
 * Graph renderized with [im2nguyen/rover](https://github.com/im2nguyen/rover) *
+
+
+### AWS overview
+![](assets/docs/result.png)
